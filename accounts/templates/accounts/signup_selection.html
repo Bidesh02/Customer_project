@@ -1,0 +1,21 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Sign Up{% endblock %}
+
+{% block content %}
+    <h2>Join Us</h2>
+    <p style="text-align: center; margin-bottom: 20px; font-size: 1.1rem; color: rgba(255,255,255,0.9);">Choose your account type:</p>
+    
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        <a href="{% url 'customer_signup' %}" style="display: block; text-decoration: none;">
+            <button type="button" style="width: 100%; margin-top: 0;">Customer Sign Up</button>
+        </a>
+        <a href="{% url 'controller_signup' %}" style="display: block; text-decoration: none;">
+            <button type="button" style="width: 100%; margin-top: 0; background-color: transparent; border: 2px solid #ffffff; color: #ffffff;">Controller Sign Up</button>
+        </a>
+    </div>
+
+    <div class="links">
+        <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+    </div>
+{% endblock %}

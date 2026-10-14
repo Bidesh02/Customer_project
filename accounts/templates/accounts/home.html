@@ -1,0 +1,127 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+    <h2>Dashboard</h2>
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <div style="font-size: 0.95rem; color: rgba(255,255,255,0.8);">Logged in as:</div>
+        <div style="font-size: 1.4rem; font-weight: 800; margin-top: 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">{{ user.email }}</div>
+        
+        <div style="display: inline-block; padding: 6px 16px; background: #ffffff; color: #4158D0; border-radius: 20px; font-size: 0.85rem; font-weight: 800; margin-top: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
+            {{ user.get_role_display }}
+        </div>
+    </div>
+
+    {% if user.role == 'CUSTOMER' %}
+        <div class="glass-card">
+            <p><strong>Name:</strong> <span>{{ user.name|default:"N/A" }}</span></p>
+            <p><strong>Age:</strong> <span>{{ user.age }}</span></p>
+            <p><strong>Gender:</strong> <span>{{ user.get_gender_display }}</span></p>
+            <p><strong>Phone:</strong> <span>{{ user.phone_number }}</span></p>
+            <p><strong>DOB:</strong> <span>{{ user.date_of_birth }}</span></p>
+        </div>
+        
+        <h3 style="margin-top: 20px; margin-bottom: 15px; font-size: 1.2rem; text-align: center;">My Issues</h3>
+        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <form method="post" action="{% url 'submit_issue' %}">
+                {% csrf_token %}
+                {{ issue_form.as_p }}
+                <button type="submit" style="padding: 10px 20px; font-size: 1rem; width: 100%; margin-top: 10px;">Submit Issue</button>
+            </form>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">
+            {% for issue in my_issues %}
+                {% if issue.is_resolved %}
+                    <div style="background: rgba(16,185,129,0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <p style="font-size: 0.95rem; margin-bottom: 5px; color: white;">{{ issue.description }}</p>
+                            <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">{{ issue.created_at|date:"M d, Y H:i" }} - <strong style="color: #10b981;">Solved</strong></span>
+                        </div>
+                    </div>
+                {% else %}
+                    <div style="background: rgba(239,68,68,0.1); padding: 12px; border-radius: 8px; border-left: 4px solid #ef4444; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <p style="font-size: 0.95rem; margin-bottom: 5px; color: white;">{{ issue.description }}</p>
+                            <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">{{ issue.created_at|date:"M d, Y H:i" }} - <strong style="color: #ef4444;">Unsolved</strong></span>
+                        </div>
+                        <form method="post" action="{% url 'resolve_issue' issue.id %}">
+                            {% csrf_token %}
+                            <button type="submit" style="padding: 6px 12px; font-size: 0.8rem; background-color: #10b981; color: white; width: auto; margin: 0; box-shadow: none;">Mark Solved</button>
+                        </form>
+                    </div>
+                {% endif %}
+            {% empty %}
+                <p style="text-align: center; color: rgba(255,255,255,0.7); font-size: 0.9rem;">You haven't submitted any issues yet.</p>
+            {% endfor %}
+        </div>
+    {% elif user.role == 'CONTROLLER' %}
+        <div class="glass-card" style="text-align: center;">
+            <p style="justify-content: center; font-size: 1.2rem; border: none;">Welcome, <strong>{{ user.name|default:user.email }}</strong></p>
+        </div>
+
+        <h3 style="margin-bottom: 15px; font-size: 1.2rem; text-align: center;">Customers Directory</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; max-height: 200px; overflow-y: auto; padding-right: 5px; margin-bottom: 20px;">
+            {% for customer in customers %}
+                <button type="button" onclick="showCustomer({{ customer.id }})" style="margin: 0; padding: 12px; font-size: 0.95rem; text-align: left; background-color: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;">
+                    Customer {{ forloop.counter }} ({{ customer.name|default:customer.email }})
+                </button>
+            {% empty %}
+                <p style="text-align: center; color: rgba(255,255,255,0.7);">No customers registered yet.</p>
+            {% endfor %}
+        </div>
+
+        <div id="customer-details-container">
+            {% for customer in customers %}
+                <div class="glass-card customer-detail" id="customer-{{ customer.id }}" style="display: none; padding: 15px;">
+                    <h4 style="margin-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 8px;">Customer {{ forloop.counter }} Data</h4>
+                    <p style="font-size: 0.9rem;"><strong>Name:</strong> <span>{{ customer.name|default:"N/A" }}</span></p>
+                    <p style="font-size: 0.9rem;"><strong>Email:</strong> <span>{{ customer.email }}</span></p>
+                    <p style="font-size: 0.9rem;"><strong>Age:</strong> <span>{{ customer.age|default:"N/A" }}</span></p>
+                    <p style="font-size: 0.9rem;"><strong>Gender:</strong> <span>{{ customer.get_gender_display|default:"N/A" }}</span></p>
+                    <p style="font-size: 0.9rem;"><strong>Phone:</strong> <span>{{ customer.phone_number|default:"N/A" }}</span></p>
+                    <p style="font-size: 0.9rem;"><strong>DOB:</strong> <span>{{ customer.date_of_birth|default:"N/A" }}</span></p>
+                    
+                    <h5 style="margin-top: 15px; margin-bottom: 10px; color: #ffcccc; font-size: 1rem;">Reported Issues</h5>
+                    <div style="display: flex; flex-direction: column; gap: 8px; max-height: 150px; overflow-y: auto; padding-right: 5px;">
+                        {% for issue in customer.issues.all %}
+                            {% if issue.is_resolved %}
+                                <div style="background: rgba(16,185,129,0.1); padding: 10px; border-radius: 6px; border-left: 3px solid #10b981;">
+                                    <p style="font-size: 0.9rem; margin-bottom: 5px; color: white;">{{ issue.description }}</p>
+                                    <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">{{ issue.created_at|date:"M d, Y H:i" }} - <strong style="color: #10b981;">Solved</strong></span>
+                                </div>
+                            {% else %}
+                                <div style="background: rgba(239,68,68,0.1); padding: 10px; border-radius: 6px; border-left: 3px solid #ef4444;">
+                                    <p style="font-size: 0.9rem; margin-bottom: 5px; color: white;">{{ issue.description }}</p>
+                                    <span style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">{{ issue.created_at|date:"M d, Y H:i" }} - <strong style="color: #ef4444;">Unsolved</strong></span>
+                                </div>
+                            {% endif %}
+                        {% empty %}
+                            <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 0; text-align: center;">No issues reported.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        
+        <script>
+            function showCustomer(id) {
+                // Hide all customer detail cards
+                document.querySelectorAll('.customer-detail').forEach(el => el.style.display = 'none');
+                
+                // Show the specific customer's data
+                const selected = document.getElementById('customer-' + id);
+                if (selected) {
+                    selected.style.display = 'block';
+                }
+            }
+        </script>
+    {% endif %}
+
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit">Log Out</button>
+    </form>
+{% endblock %}
